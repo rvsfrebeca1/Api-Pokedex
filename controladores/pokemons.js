@@ -45,3 +45,25 @@ const listarPokemons = async (req, res) => {
   }
 
 }
+
+const obterPokemon = async (req, res) => {
+  const { id } = req.params
+  const { token } = req.body
+  await validacao.campoObrigatorio(token, "token", res)
+  try {
+    const usuario = jwt.verify(token, chave.toString())
+    const { rows, rowCount } = await pool.query('SELECT id, usuario_id as usuario, nome, habilidades, imagem, apelido FROM pokemons WHERE id = $1', [id])
+
+    if (rowCount === 0) return res.json("Pokemon não encontrado").status(404)
+
+
+    const habilidades = rows[0].habilidades.split(', ')
+    rows[0].habilidades = habilidades
+    rows[0].usuario = usuario.nome
+    rows[0].nome = rows[0].nome
+
+    return res.json(rows[0])
+  } catch (error) {
+    return res.json(error.message)
+  }
+}
