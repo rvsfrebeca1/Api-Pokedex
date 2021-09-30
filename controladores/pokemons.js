@@ -25,3 +25,23 @@ const cadastrarPokemon = async (req, res) => {
   }
 
 }
+
+
+const listarPokemons = async (req, res) => {
+  const { token } = req.body
+  await validacao.campoObrigatorio(token, "token", res)
+  try {
+    const usuario = jwt.verify(token, chave.toString())
+    const { rows } = await pool.query('SELECT id, usuario_id as usuario, nome, habilidades, imagem, apelido FROM pokemons')
+    for (let row of rows) {
+      const habilidades = row.habilidades.split(', ')
+      row.habilidades = habilidades
+      row.usuario = usuario.nome
+      row.nome = row.nome
+    }
+    return res.json(rows)
+  } catch (error) {
+    return res.json("Token inválido")
+  }
+
+}
