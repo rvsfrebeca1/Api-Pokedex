@@ -35,3 +35,51 @@ const cadastrarUsuario = async (req, res) => {
     return res.json(error.message)
   }
 }
+
+
+const logarUsuario = async (req, res) => {
+  const { email, senha } = req.body
+  await validacao.campoObrigatorio(email, "email", res)
+  await validacao.campoObrigatorio(senha, "senha", res)
+
+  const senhaCript = Buffer.from(senha)
+  const hash = await pwd.hash(senhaCript)
+  const result = await pwd.verify(senhaCript, hash)
+  try {
+    const query = 'SELECT * FROM usuarios WHERE email = $1'
+    const { rowCount, rows } = await pool.query(query, [email])
+    let token = ''
+    if (rowCount === 0) return res.json('Email ou senha incorretos')
+    switch (result) {
+      case securePassword.INVALID_UNRECOGNIZED_HASH:
+      case securePassword.INVALID:
+
+        return res.json("email ou senha incorretos")
+      case securePassword.VALID:
+        return res.json(await criarToken(rows))
+      case securePassword.VALID_NEEDS_REHASH:
+        try {
+          const hashNovo = await pwd.hash(userPassword)
+          const query = 'UPDATE usuarios SET senha = $1'
+          await pool.query(query, [hashNovo.toString("hex")])
+          return res.json(await criarToken(rows))
+        } catch (err) {
+          return res.json(err.message)
+        }
+    }
+
+
+
+
+
+  } catch (error) {
+    return res.json(error.message)
+  }
+
+
+}
+
+module.exports = {
+  cadastrarUsuario,
+  logarUsuario
+}
