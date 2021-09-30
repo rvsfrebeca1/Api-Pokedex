@@ -67,3 +67,29 @@ const obterPokemon = async (req, res) => {
     return res.json(error.message)
   }
 }
+
+const deletarPokemon = async (req, res) => {
+  const { id } = req.params
+  const { token } = req.body
+  await validacao.campoObrigatorio(token, "token", res)
+
+  try {
+    const usuario = jwt.verify(token, chave.toString())
+    const { rows, rowCount } = await pool.query('DELETE FROM pokemons WHERE id = $1', [id])
+
+    if (rowCount === 0) return res.json("Pokemon não encontrado").status(404)
+
+    return res.json("Pokemon deletado com sucesso")
+  } catch (error) {
+    return res.json(error.message)
+  }
+
+}
+
+module.exports = {
+  cadastrarPokemon,
+  atualizarPokemon,
+  listarPokemons,
+  obterPokemon,
+  deletarPokemon
+}
